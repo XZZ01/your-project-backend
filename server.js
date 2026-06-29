@@ -13,7 +13,6 @@ app.get('/', (req, res) => {
     res.send('✅ Backend is running!');
 });
 
-分配的端口
 app.listen(PORT, () => {
     console.log(`✅ Server is running on port ${PORT}`);
 });
