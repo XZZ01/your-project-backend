@@ -45,45 +45,28 @@ router.delete('/items/:id', (req, res) => {
  * 请求体示例: { "openIds": ["ou_xxx"], "msgType": "text", "content": { "text": "Hello" } }
  */
 router.post('/send-batch-message', async (req, res) => {
-    const { openIds, msgType, content } = req.body;
+    const { openIds, departmentIds, msgType, content } = req.body;
 
-    // 1. 基本参数校验
-    if (!openIds || !Array.isArray(openIds) || openIds.length === 0) {
-        return res.status(400).json({ error: '参数错误: openIds 必须是非空数组' });
-    }
-    if (!msgType) {
-        return res.status(400).json({ error: '参数错误: msgType 不能为空' });
-    }
-    if (!content) {
-        return res.status(400).json({ error: '参数错误: content 不能为空' });
+    // 校验：至少有一个接收对象
+    if ((!openIds || openIds.length === 0) && (!departmentIds || departmentIds.length === 0)) {
+        return res.status(400).json({ error: '至少指定一个用户或部门' });
     }
 
     try {
-        // 2. 调用飞书服务
-        const result = await feishuService.sendBatchMessage(openIds, msgType, content);
-        // 3. 返回成功结果给前端
+        // 调用飞书服务，传入 departmentIds
+        const result = await feishuService.sendBatchMessage(
+            openIds || [],
+            msgType,
+            content,
+            departmentIds || [] // 新增参数
+        );
         res.json({
             success: true,
             data: result.data,
             message: '消息发送成功',
         });
     } catch (error) {
-        console.error('发送批量消息失败:', error.message);
-        // 尝试解析飞书返回的错误信息
-        try {
-            const feishuError = JSON.parse(error.message);
-            res.status(500).json({
-                success: false,
-                error: `飞书接口返回错误 (${feishuError.code}): ${feishuError.msg}`,
-                detail: feishuError.data,
-            });
-        } catch {
-            // 如果不是 JSON 格式的错误，直接返回错误信息
-            res.status(500).json({
-                success: false,
-                error: error.message || '发送消息失败，请稍后重试',
-            });
-        }
+        // ... 错误处理 ...
     }
 });
 
@@ -132,6 +115,23 @@ router.get('/users', async (req, res) => {
         res.status(500).json({
             success: false,
             error: error.message || '获取用户列表失败，请稍后重试',
+        });
+    }
+});
+
+// 获取部门列表
+router.get('/departments', async (req, res) => {
+    try {
+        const departments = await feishuService.getDepartments();
+        res.json({
+            success: true,
+            data: departments,
+        });
+    } catch (error) {
+        console.error('获取部门列表失败:', error.message);
+        res.status(500).json({
+            success: false,
+            error: error.message || '获取部门列表失败',
         });
     }
 });

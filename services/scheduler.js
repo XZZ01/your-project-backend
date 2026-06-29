@@ -79,7 +79,7 @@ function startScheduledTask(config) {
         return;
     }
 
-    const { repeatType, dateTime, dayOfWeek, openIds, msgType, content } = config;
+    const { repeatType, dateTime, dayOfWeek, openIds, departmentIds = [], msgType, content } = config;
 
     // 解析时间
     const startDate = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
@@ -94,7 +94,7 @@ function startScheduledTask(config) {
     }
 
     // 存储配置
-    currentConfig = { ...config, startDate };
+    currentConfig = { ...config, startDate, departmentIds };
 
 // 创建定时任务
 let job;
@@ -107,7 +107,7 @@ if (repeatType === 'once') {
         // 执行发送
         try {
             console.log(`📨 发送消息给 ${openIds.length} 位接收人...`);
-            const result = await sendBatchMessage(openIds, msgType, content);
+            const result = await sendBatchMessage(openIds, msgType, content, departmentIds);
             console.log('✅ 消息发送成功:', result.data?.message_id);
         } catch (error) {
             console.error('❌ 消息发送失败:', error.message);
@@ -138,7 +138,7 @@ if (repeatType === 'once') {
         }
         try {
             console.log(`📨 发送消息给 ${openIds.length} 位接收人...`);
-            const result = await sendBatchMessage(openIds, msgType, content);
+            const result = await sendBatchMessage(openIds, msgType, content, departmentIds);
             console.log('✅ 消息发送成功:', result.data?.message_id);
         } catch (error) {
             console.error('❌ 消息发送失败:', error.message);
@@ -170,7 +170,10 @@ function stopScheduledTask() {
 function getScheduledTaskConfig() {
     if (!currentConfig) return null;
     // 返回副本，避免外部修改
-    return { ...currentConfig };
+    return { 
+        ...currentConfig,
+        departmentIds: currentConfig.departmentIds || []
+     };
 }
 
 module.exports = {

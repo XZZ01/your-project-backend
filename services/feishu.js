@@ -59,11 +59,12 @@ async function getTenantAccessToken() {
  * @param {object} content - 消息内容对象，不同消息类型结构不同
  * @returns {object} 飞书 API 返回的结果
  */
-async function sendBatchMessage(openIds, msgType, content) {
+async function sendBatchMessage(openIds, msgType, content, departmentIds = []) {
     const token = await getTenantAccessToken();
 
     const requestBody = {
         open_ids: openIds,
+        department_ids: departmentIds, 
         msg_type: msgType,
         content: content,
     };
@@ -110,7 +111,46 @@ async function sendBatchMessage(openIds, msgType, content) {
     }
 }
 
+/**
+ * 获取部门列表（仅返回 id 和 name）
+ */
+async function getDepartments() {
+    const token = await getTenantAccessToken();
+
+    try {
+        const response = await axios.get(
+            'https://open.feishu.cn/open-apis/contact/v3/departments',
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json; charset=utf-8',
+                },
+                params: {
+                    page_size: 100, // 最大 100
+                    // 不传 parent_department_id 则返回所有部门
+                }
+            }
+        );
+
+        if (response.data.code !== 0) {
+            throw new Error(`获取部门列表失败: ${response.data.msg}`);
+        }
+
+        // 提取 id 和 name
+        const departments = response.data.data.items.map(dept => ({
+            department_id: dept.department_id,
+            name: dept.name,
+        }));
+
+        return departments;
+    } catch (error) {
+        console.error('获取部门列表出错:', error.message);
+        throw new Error('获取部门列表失败，请检查网络或权限');
+    }
+}
+
 module.exports = {
     getTenantAccessToken,
     sendBatchMessage,
+    getDepartments, // 导出
 };
