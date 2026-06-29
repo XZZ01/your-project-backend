@@ -116,6 +116,8 @@ async function sendBatchMessage(openIds, msgType, content, departmentIds = []) {
  */
 async function getDepartments() {
     const token = await getTenantAccessToken();
+    // 调试：打印 token 前缀，确认 token 已获取
+    console.log('✅ 获取到的 token 前缀:', token.substring(0, 15) + '...');
 
     try {
         const response = await axios.get(
@@ -131,8 +133,7 @@ async function getDepartments() {
             }
         );
 
-        // 打印飞书返回的完整数据（方便调试）
-        console.log('飞书部门接口响应:', JSON.stringify(response.data, null, 2));
+        console.log('✅ 飞书部门接口响应:', JSON.stringify(response.data, null, 2));
 
         if (response.data.code !== 0) {
             throw new Error(`飞书返回错误: ${response.data.msg} (code: ${response.data.code})`);
@@ -145,11 +146,14 @@ async function getDepartments() {
 
         return departments;
     } catch (error) {
-        // 如果是 axios 网络错误，打印错误详情
+        // 增强错误日志，打印飞书返回的详细信息
         if (error.response) {
-            console.error('飞书API响应错误:', error.response.status, error.response.data);
+            console.error('❌ 飞书API响应错误状态:', error.response.status);
+            console.error('❌ 飞书API响应错误数据:', JSON.stringify(error.response.data, null, 2));
+        } else if (error.request) {
+            console.error('❌ 请求发出但未收到响应:', error.request);
         } else {
-            console.error('获取部门列表出错:', error.message);
+            console.error('❌ 请求配置错误:', error.message);
         }
         throw new Error('获取部门列表失败，请检查网络或飞书权限');
     }
