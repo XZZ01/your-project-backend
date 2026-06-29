@@ -128,7 +128,7 @@ async function getDepartments() {
                     'Content-Type': 'application/json; charset=utf-8',
                 },
                 params: {
-                    page_size: 100,
+                    page_size: 50,
                 }
             }
         );
