@@ -126,17 +126,18 @@ async function getDepartments() {
                     'Content-Type': 'application/json; charset=utf-8',
                 },
                 params: {
-                    page_size: 100, // 最大 100
-                    // 不传 parent_department_id 则返回所有部门
+                    page_size: 100,
                 }
             }
         );
 
+        // 打印飞书返回的完整数据（方便调试）
+        console.log('飞书部门接口响应:', JSON.stringify(response.data, null, 2));
+
         if (response.data.code !== 0) {
-            throw new Error(`获取部门列表失败: ${response.data.msg}`);
+            throw new Error(`飞书返回错误: ${response.data.msg} (code: ${response.data.code})`);
         }
 
-        // 提取 id 和 name
         const departments = response.data.data.items.map(dept => ({
             department_id: dept.department_id,
             name: dept.name,
@@ -144,8 +145,13 @@ async function getDepartments() {
 
         return departments;
     } catch (error) {
-        console.error('获取部门列表出错:', error.message);
-        throw new Error('获取部门列表失败，请检查网络或权限');
+        // 如果是 axios 网络错误，打印错误详情
+        if (error.response) {
+            console.error('飞书API响应错误:', error.response.status, error.response.data);
+        } else {
+            console.error('获取部门列表出错:', error.message);
+        }
+        throw new Error('获取部门列表失败，请检查网络或飞书权限');
     }
 }
 
