@@ -116,8 +116,6 @@ async function sendBatchMessage(openIds, msgType, content, departmentIds = []) {
  */
 async function getDepartments() {
     const token = await getTenantAccessToken();
-    // 调试：打印 token 前缀，确认 token 已获取
-    console.log('✅ 获取到的 token 前缀:', token.substring(0, 15) + '...');
 
     try {
         const response = await axios.get(
@@ -133,20 +131,20 @@ async function getDepartments() {
             }
         );
 
-        console.log('✅ 飞书部门接口响应:', JSON.stringify(response.data, null, 2));
-
         if (response.data.code !== 0) {
             throw new Error(`飞书返回错误: ${response.data.msg} (code: ${response.data.code})`);
         }
 
-        const departments = response.data.data.items.map(dept => ({
+        // 关键修改：使用 response.data.data.departments（而不是 items）
+        const departmentData = response.data.data.departments || [];
+        const departments = departmentData.map(dept => ({
             department_id: dept.department_id,
             name: dept.name,
         }));
 
+        console.log(`✅ 获取到 ${departments.length} 个部门`);
         return departments;
     } catch (error) {
-        // 增强错误日志，打印飞书返回的详细信息
         if (error.response) {
             console.error('❌ 飞书API响应错误状态:', error.response.status);
             console.error('❌ 飞书API响应错误数据:', JSON.stringify(error.response.data, null, 2));
